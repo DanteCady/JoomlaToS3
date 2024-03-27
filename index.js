@@ -10,19 +10,17 @@ const s3Client = new S3Client({
     accessKeyId: accessKeyId,
     secretAccessKey: secretAccessKey,
   },
-  region: "us-west-2",
+  region: "Your-AWS-Region-Here",
 });
 
 async function main() {
+  // HTTP Endpoints
    const endpointURL = [
-     "https://usto.kb.gniecloud.com/api/index.php/v1/content/articles?page[limit]=500",
-     "https://usto.kb.gniecloud.com/api/index.php/v1/content/articles?page%5Blimit%5D=500&page%5Boffset%5D=500",
-     "https://usto.kb.gniecloud.com/api/index.php/v1/content/articles?page%5Blimit%5D=500&page%5Boffset%5D=1000",
-     "https://usto.kb.gniecloud.com/api/index.php/v1/content/articles?page%5Blimit%5D=500&page%5Boffset%5D=1500",
+ 
    ];
   try {
     const token =
-      "c2hhMjU2Ojk3ODoxMTZmNzBjMzZjOWJlYWM5Yzk2MThlNGFmYzA4ODY1MjczMDU5ODU1Y2YwMjlkOTE3ZGRhN2QxNGQ1MmQ0MmNk=";
+      "Your-Joomla-Token-Here";
     const headers = {
       Authorization: `Bearer ${token}`,
       ContentType: "application/json",
@@ -51,7 +49,7 @@ async function main() {
 
         const params = {
           Bucket: "joomla-articles",
-          Key: `usto/${title.replace(/[\/\?<>\\:\*\|":]/g, "_")}.html`,
+          Key: `{Your-Bucket-Folder-Here}/${title.replace(/[\/\?<>\\:\*\|":]/g, "_")}.html`,
           Body: htmlContent,
           ContentType: "text/html",
         };
