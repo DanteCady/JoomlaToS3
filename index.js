@@ -1,42 +1,36 @@
 const axios = require("axios");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
 
-// AWS Credentials
-accessKeyId = process.env.AWS_SECRET_ID;
-secretAccessKey = process.env.AWS_SECRET_KEY;
-// Configure AWS SDK
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: accessKeyId,
-    secretAccessKey: secretAccessKey,
-  },
-  region: "Your-AWS-Region-Here",
-});
+// Connection string for Azure Storage Account
+const connStr = "Your-Connection-String-Here";
+
+// Initialize BlobServiceClient
+const blobServiceClient = BlobServiceClient.fromConnectionString(connStr);
+const containerName = "joomlaarticles";
 
 async function main() {
-  // HTTP Endpoints
-   const endpointURL = [
- 
-   ];
+  const endpointURL = [
+    "Your-Endpoints-Here"
+  ];
+  
   try {
-    const token =
-      "Your-Joomla-Token-Here";
+    const token = "Your-Token-Here";
     const headers = {
       Authorization: `Bearer ${token}`,
       ContentType: "application/json",
     };
+
+    // Ensure the container exists
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    await containerClient.createIfNotExists({ access: 'container' });
 
     for (let url of endpointURL) {
       const response = await axios.get(url, { headers });
       console.log("API Response for URL", url, ":", response.data);
 
       if (response.status !== 200) {
-        console.error(
-          `Failed to fetch data from the API. Status: ${response.status}`
-        );
-        throw new Error(
-          `Failed to fetch data from the API. Status: ${response.status}`
-        );
+        console.error(`Failed to fetch data from the API. Status: ${response.status}`);
+        throw new Error(`Failed to fetch data from the API. Status: ${response.status}`);
       }
 
       const articles = response.data.data;
@@ -46,16 +40,12 @@ async function main() {
         console.log("Processing article:", title);
 
         const htmlContent = `<html><head><title>${title}</title></head><body>${text}</body></html>`;
+        const blobName = `usto/${title.replace(/[\/\?<>\\:\*\|":]/g, "_")}.html`;
 
-        const params = {
-          Bucket: "joomla-articles",
-          Key: `{Your-Bucket-Folder-Here}/${title.replace(/[\/\?<>\\:\*\|":]/g, "_")}.html`,
-          Body: htmlContent,
-          ContentType: "text/html",
-        };
-
-        const putObjectCommand = new PutObjectCommand(params);
-        await s3Client.send(putObjectCommand);
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        await blockBlobClient.upload(htmlContent, Buffer.byteLength(htmlContent), {
+          blobHTTPHeaders: { blobContentType: "text/html" },
+        });
 
         console.log("Uploaded HTML file:", title);
       }
